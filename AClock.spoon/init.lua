@@ -41,35 +41,29 @@ obj.logger = logger
 obj._attribs = {
   format = "%H:%M:%S",
   textFont = "Impact",
-  textSize = 135,
-  HColor = {hex="#a32525"},
-  MColor = {hex="#afab36"},
-  SColor = {hex="#2c4693"},
-  width = 900,
+  textSize = 150,
+  width = 620,
   height = 230,
   showDuration = 4,  -- seconds
   hotkey = 'escape',
   hotkeyMods = {},
 }
+textSize = 150
 hours = {
-  font = {name = "Impact", size = 135},
+  font = {name = "Impact", size = textSize},
   color = {hex="#a32525"},
-  backgroundColor = {hex="#000000"}
 }
 minutes = {
-  font = {name = "Impact", size = 135},
+  font = {name = "Impact", size = textSize},
   color = {hex="#afab36"},
-  backgroundColor = {hex="#000000"}
 }
 seconds = {
-  font = {name = "Impact", size = 135},
+  font = {name = "Impact", size = textSize},
   color = {hex="#2c4693"},
-  backgroundColor = {hex="#000000"}
 }
 colon = {
-  font = {name = "Impact", size = 135},
+  font = {name = "Impact", size = textSize},
   color = {hex="#ffffff"},
-  backgroundColor = {hex="#000000"}
 }
 for k, v in pairs(obj._attribs) do obj[k] = v end
 
@@ -86,9 +80,12 @@ colontext = hs.styledtext.new(":", colon)
 function obj:init()
   if not self.canvas then self.canvas = hs.canvas.new({x=0, y=0, w=0, h=0}) end
   self.canvas[1] = {
+    type = "rectangle",
+    fillColor = {hex="#000000"}
+  }
+  self.canvas[2] = {
     type = "text",
     text = "",
-    backgroundColor = "#000000",
     textFont = self.textFont,
     textSize = self.textSize,
     textColor = self.HColor,
@@ -110,7 +107,10 @@ function obj:init()
 end
 
 function obj:tick_timer_fn()
-  return hs.timer.doEvery(1, function() self.canvas[1].text = hs.styledtext.new(os.date(" %H"), hours) .. colontext .. hs.styledtext.new(os.date("%M"), minutes) .. colontext .. hs.styledtext.new(os.date("%S "), seconds) end)
+  return hs.timer.doEvery(1, function() 
+    self.canvas[1] = {type = "rectangle", fillColor = {hex="#000000"}}
+    self.canvas[2].text = hs.styledtext.new(os.date(" %H"), hours) .. colontext .. hs.styledtext.new(os.date("%M"), minutes) .. colontext .. hs.styledtext.new(os.date("%S "), seconds)
+  end)
 end
 
 function obj:isShowing()
