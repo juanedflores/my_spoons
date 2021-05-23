@@ -34,27 +34,56 @@ function obj:init()
 end
 
 function obj:hideApps()
-	local w = hs.window.visibleWindows()
-	for i,t in ipairs(w) do
-		app = w[i]:application()
-		print(app:name())
-		if not app:name() == "Finder" or "kitty" then
-			app:hide()
-		end
+	t_index = 1
 
-		obj.activate_apps[i] = app
+	kitty = hs.application.find("kitty")
+	if kitty then
+		kitty:hide()
+		obj.activate_apps[t_index] = kitty 
+		t_index = t_index + 1
+	end
+
+	firefox = hs.application.find("Firefox")
+	if firefox then
+		firefox:hide()
+		obj.activate_apps[t_index] = firefox 
+		t_index = t_index + 1
 	end
 
 	finder = hs.application.find("Finder")
-	finder:hide()
-	kitty = hs.application.find("kitty")
-	kitty:hide()
+	hs.timer.delayed.new(0.3, function()
+		finder:hide()
+		obj.activate_apps[t_index] = finder
+		t_index = t_index + 1
+	end):start()
+
+	local w = hs.window.visibleWindows()
+	for i,t in ipairs(w) do
+		app = w[i]:application()
+
+		if app:name() ~= "Finder" and app:name() ~= "Firefox" and app:name() ~= "kitty" then
+			app:hide()
+			obj.activate_apps[t_index] = app
+			t_index = t_index + 1
+		end
+	end
 end
 
 function obj:showApps()
 	-- unhide all apps that we hid earlier
+	kitty_found = 0
 	for i,t in ipairs(obj.activate_apps) do
-		obj.activate_apps[i]:unhide()
+		if obj.activate_apps[i]:name() == "kitty" then
+			kitty_found = true
+		else 
+			obj.activate_apps[i]:unhide()
+		end
+	end
+	-- I usually have kitty on the right side and
+	-- app must be unhidden last in order to be there.
+	if kitty_found then
+		kitty = hs.application.find("kitty")
+		kitty:unhide()
 	end
 	-- empty table
 	for k in pairs (obj.activate_apps) do
