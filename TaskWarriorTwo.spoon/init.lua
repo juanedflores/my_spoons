@@ -37,6 +37,9 @@ textattrbsB = {
   paragraphStyle = {lineHeightMultiple = 0.7, linebreak = clip},
   color = {hex="#ffffff"}
 }
+blue_col = {
+  color = {hex="#36A3D9"}
+}
 orange_col = {
   color = {hex="#FF7733"}
 }
@@ -90,7 +93,6 @@ function checkTasks(files)
     taskname = ""
     obj.elapsed_minutes = 0
     obj.elapsed_hours = 0
-    -- line_index = 0
     for _,file in pairs(files) do
       if file:sub(-12) == "pending.data" then
         -- check for a started task
@@ -101,19 +103,14 @@ function checkTasks(files)
           end
         end
       end
-      -- line_index = line_index + 1
     end
     if foundtask then
       obj.taskStarted = true
       obj.task_name = taskname
       rawtext = "current task: " .. taskname
-      -- display_text = hs.styledtext.new("current task: " .. taskname, textattrbs):setStyle(orange_col, 0, 13):setStyle(green_col, 14, 14+string.len(taskname))
-      -- obj.canvas[1].text = display_text
     else 
       obj.taskStarted = false
       rawtext = "break time"
-      -- display_text = hs.styledtext.new("break time", textattrbs)
-      -- obj.canvas[1].text = display_text
     end
 end
 
@@ -126,11 +123,19 @@ function obj:tick_timer_animate()
     end
     totalstring = spaces_string .. rawtext 
     print(spaces)
+    -- hard coded number of spaces to restart text animation from left side
     if (spaces == 874) then
-      print("FOUND IT")
       spaces = 0
     end
+    if (rawtext == "break time") then
     display_text = display_text:setString(spaces_string .. rawtext)
+      :setStyle(blue_col, 0, spaces+11)
+    else
+    display_text = display_text:setString(spaces_string .. rawtext)
+      :setStyle(green_col, 0, spaces+16)
+      :setStyle(orange_col, spaces+16, spaces+16+string.len(taskname))
+      :setStyle(red_col, spaces+16+string.len(taskname), spaces+16+string.len(taskname)+30)
+    end
     self.canvas[2].text = display_text 
   end)
 end
@@ -163,14 +168,8 @@ function obj:tick_timer_fn()
       styledText = styledText:setStyle(green_col, 14, 14+string.len(self.task_name))
       styledText = styledText:setStyle(red_col, 14+string.len(self.task_name)+1, -1)
       rawtext = styledText:getString()
-      -- display_text = styledText
-      -- display_text = display_text:setString(spaces_string .. display_text:getString())
-      -- self.canvas[1].text = display_text 
     else
-      rawtext = "break time " .. "elapsed time: " .. time_text
-      -- display_text = hs.styledtext.new("break time " .. "elapsed time: " .. time_text, textattrbs):setStyle(red_col, 11, -1)
-      -- display_text = display_text:setString(spaces_string .. display_text:getString())
-      -- self.canvas[1].text = display_text
+      rawtext = "break time. " .. "elapsed time: " .. time_text
     end
 
 
@@ -180,7 +179,6 @@ end
 function obj:checkIfTaskStarted()
   local f = io.open(os.getenv("HOME") .. "/.task/pending.data", "rb")
   lines = f:lines()
-  -- line_index = 0
   for line in lines do
 
     if (string.match(line, "start")) then
@@ -189,16 +187,13 @@ function obj:checkIfTaskStarted()
       taskname = string.match(line, '"' .. '([a-zA-Z%s]*)' .. '"')
       self.task_name = taskname
       rawtext = "current task: " .. taskname
-      -- display_text = hs.styledtext.new("current task: " .. taskname, textattrbs):setStyle(orange_col, 0, 13):setStyle(green_col, 14, 14+string.len(taskname))
-      -- display_text = display_text:setString(spaces_string .. display_text:getString())
       self.canvas[2].text = display_text
     else 
       rawtext = "break time"
-      -- display_text = hs.styledtext.new("break time", textattrbs)
-      -- display_text = display_text:setString(spaces_string .. display_text:getString())
+      display_text = display_text:setString(spaces_string .. rawtext)
+        :setStyle(blue_col, 0, spaces+11)
       obj.canvas[2].text = display_text
     end
-    -- line_index = line_index + 1
   end
 end
 
