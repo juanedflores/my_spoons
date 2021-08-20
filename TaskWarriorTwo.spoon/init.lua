@@ -25,17 +25,17 @@ obj.pending_tasks = {}
 -- Defaults
 obj._attribs = {
   task_name = "",
-  speech_synth = hs.speech.new("Alex"),
   elapsed_minutes = 0,
   taskStarted = false,
   elapsed_hours = 0,
   width = 1000,
   height = 400,
+  blink_count = 0,
+  blink_max = 12
 }
-textattrbsB = {
-  font = {name = "Impact", size = 30},
-  paragraphStyle = {lineHeightMultiple = 0.7, linebreak = clip},
-  color = {hex="#ffffff"}
+textattrbs = {
+  font = {name = "Impact", size = 24},
+  paragraphStyle = {lineHeightMultiple = 0.8, linebreak = clip},
 }
 blue_col = {
   color = {hex="#36A3D9"}
@@ -49,8 +49,8 @@ green_col = {
 red_col = {
   color = {hex="#F07178"}
 }
-rawtext = ""
-display_text = hs.styledtext.new("break time", textattrbsB)
+rawtext = "break time"
+display_text = hs.styledtext.new(rawtext, textattrbs):setStyle(blue_col, 0, 11)
 spaces = 0
 spaces_string = ""
 
@@ -122,12 +122,11 @@ function obj:tick_timer_animate()
       spaces_string = spaces_string .. " "
     end
     totalstring = spaces_string .. rawtext 
-    print(spaces)
     -- hard coded number of spaces to restart text animation from left side
-    if (spaces == 874) then
+    if (spaces == 600) then
       spaces = 0
     end
-    if (rawtext == "break time") then
+    if (taskname == nil or not self.taskStarted) then
     display_text = display_text:setString(spaces_string .. rawtext)
       :setStyle(blue_col, 0, spaces+11)
     else
@@ -137,6 +136,13 @@ function obj:tick_timer_animate()
       :setStyle(red_col, spaces+16+string.len(taskname), spaces+16+string.len(taskname)+30)
     end
     self.canvas[2].text = display_text 
+
+    -- blink the banner when an hour has passed
+    if (self.blink_count%2==0) then 
+      self.canvas[1] = {type = "rectangle", fillColor = {hex="#000000"}}
+    else 
+      self.canvas[1] = {type = "rectangle", fillColor = {hex="#d78700"}} 
+    end
   end)
 end
 
@@ -145,11 +151,13 @@ function obj:tick_timer_fn()
 
     -- keep track of time
     self.elapsed_minutes = self.elapsed_minutes + 1
+    -- if an hour passes then..
     if self.elapsed_minutes % 60 == 0 then
       self.elapsed_hours = self.elapsed_hours + 1
       -- if in break time, let me know when an hour passes
       if self.taskStarted == false then
-        self.speech_synth:speak(self.elapsed_hours .. "hours have passed")
+        hs.timer.doUntil(function() if (self.blink_count == self.blink_max) then self.canvas[1] = {type = "rectangle", fillColor = {hex="#d78700"}} return true end end,
+          function() self.blink_count = self.blink_count + 1 end)
       end
     end
 
@@ -163,10 +171,7 @@ function obj:tick_timer_fn()
     end
 
     if self.taskStarted then
-      styledText = hs.styledtext.new("current task: " .. self.task_name .. " elapsed time:  " ..  time_text, textattrbsB)
-      styledText = styledText:setStyle(orange_col, 0, 13)
-      styledText = styledText:setStyle(green_col, 14, 14+string.len(self.task_name))
-      styledText = styledText:setStyle(red_col, 14+string.len(self.task_name)+1, -1)
+      styledText = hs.styledtext.new("current task: " .. self.task_name .. " elapsed time:  " ..  time_text, textattrbs)
       rawtext = styledText:getString()
     else
       rawtext = "break time. " .. "elapsed time: " .. time_text
@@ -183,7 +188,6 @@ function obj:checkIfTaskStarted()
 
     if (string.match(line, "start")) then
       self.taskStarted = true
-      -- taskname = string.match(line, 'description:' .. '"' .. '(.*)' .. '"')
       taskname = string.match(line, '"' .. '([a-zA-Z%s]*)' .. '"')
       self.task_name = taskname
       rawtext = "current task: " .. taskname
